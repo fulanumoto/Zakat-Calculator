@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة الزكاة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; transition: all 0.3s ease; }
+        .quran-font { font-family: 'Amiri', serif; }
+        .gold-accent { color: #d4af37; }
+        .gold-bg { background-color: #d4af37; }
+        [x-cloak] { display: none !important; }
+        
+        .number-transition {
+            font-variant-numeric: tabular-nums;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* تصغير حجم الـ placeholder في جميع الحقول */
+        input::placeholder {
+            font-size: 0.85rem !important;
+            font-weight: normal !important;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body x-data="zakatApp()" :class="darkMode ? 'dark bg-slate-950' : 'bg-slate-50'" x-cloak>
+
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        
+        <div class="text-center mb-10 space-y-4">
+            <div class="inline-block">
+                <p class="quran-font text-base md:text-lg lg:text-xl dark:text-amber-200/90 text-slate-700 leading-relaxed px-4">
+    <span class="text-yellow-400 font-bold">(</span>خُذْ مِنْ أَمْوَالِهِمْ صَدَقَةً تُطَهِّرُهُمْ وَتُزَكِّيهِم بِهَا وَصَلِّ عَلَيْهِمْ إِنَّ صَلاَتَكَ سَكَنٌ لَّهُمْ وَاللّهُ سَمِيعٌ عَلِيمٌ<span class="text-yellow-400 font-bold">)</span>
+</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-t dark:border-slate-800 pt-8">
+            <div>
+                <h1 class="text-2xl font-bold dark:text-white text-slate-900">حاسبة الزكاة</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">حساب الذهب والمال وفق مذهب الجمهور</p>
+            </div>
+            
+            <button @click="darkMode = !darkMode" class="flex items-center gap-3 px-4 py-2 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all shadow-sm active:scale-95">
+                <span class="text-sm font-medium dark:text-slate-300 text-slate-600" x-text="darkMode ? 'الرؤية الليلية' : 'الوضع العادي'"></span>
+                <div class="relative w-12 h-6 rounded-full bg-slate-200 dark:bg-amber-500 transition-colors">
+                    <div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white transition-transform duration-300" :style="darkMode ? 'transform: translateX(-24px)' : ''"></div>
+                </div>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold gold-accent">1. مقتنيات الذهب</h2>
+                        <button @click="addItem()" class="px-5 py-2 gold-bg hover:opacity-90 text-white rounded-xl text-sm font-bold transition-all transform active:scale-95 shadow-md">+ قطعة ذهب</button>
+                    </div>
+                    <div class="space-y-4">
+                        <template x-for="(item, index) in items" :key="index">
+                            <div class="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 relative transition-all" 
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                 x-transition:enter-end="opacity-100 transform translate-y-0">
+                                
+                                <button @click="removeItem(index)" 
+                                        class="absolute -top-2 -left-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:bg-red-600 hover:rotate-90 hover:scale-110 active:scale-75 group">
+                                    <svg class="w-4 h-4 transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 mb-2">الوزن (قرام)</label>
+                                        <input type="number" x-model.number="item.weight" @input="calculate()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 dark:text-white outline-none focus:ring-2 ring-amber-500 transition-all" placeholder="وزن الذهب">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 mb-2">العيار</label>
+                                        <select x-model.number="item.karat" @change="calculate()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 dark:text-white outline-none">
+                                            <option value="24">عيار 24</option><option value="22">عيار 22</option><option value="21">عيار 21</option><option value="18">عيار 18</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-span-2 md:col-span-1 flex flex-col justify-end">
+                                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">وزن الصافي:</div>
+                                        <div class="text-lg font-bold gold-accent" x-text="getPureWeight(item).toFixed(2) + ' قرام'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-6">
+                    <h2 class="text-xl font-bold gold-accent mb-6">2. الأموال النقدية</h2>
+                    <input type="number" x-model.number="moneyAmount" @input="calculate()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg dark:text-white outline-none focus:ring-2 ring-amber-500 transition-all" placeholder="المبلغ المدخر">
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border-2 border-slate-100 dark:border-slate-800 p-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                        <label class="text-sm font-bold text-slate-700 dark:text-slate-300" x-text="inputMode === 'price' ? 'سعر قرام الذهب اليوم (عيار 24):' : 'نصاب زكاة المال المقدر بالذهب:'"></label>
+                        <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start">
+                            <button @click="inputMode = 'price'" :class="inputMode === 'price' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-500'" class="px-3 py-1 text-xs font-bold rounded-md transition-all">بالقرام</button>
+                            <button @click="inputMode = 'nisab'" :class="inputMode === 'nisab' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-500'" class="px-3 py-1 text-xs font-bold rounded-md transition-all">بالنصاب</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div x-show="inputMode === 'price'" x-transition>
+                            <input type="number" x-model.number="goldPrice" @input="updateFromPrice()" class="w-full bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-900/50 rounded-2xl px-5 py-3 text-xl font-black text-amber-700 dark:text-amber-400 outline-none" placeholder="سعر قرام الذهب">
+                        </div>
+                        <div x-show="inputMode === 'nisab'" x-transition>
+                            <input type="number" x-model.number="manualNisab" @input="updateFromNisab()" class="w-full bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-900/50 rounded-2xl px-5 py-3 text-xl font-black text-amber-700 dark:text-amber-400 outline-none" placeholder="نصاب المال المقدر بالذهب">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-slate-100 dark:border-slate-800 p-8 sticky top-8">
+                    <h2 class="text-xl font-bold dark:text-white mb-8 border-b dark:border-slate-800 pb-4 text-center">المجموع الكلي</h2>
+                    
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-400">قيمة الذهب:</span>
+                                <span class="dark:text-white font-medium" x-text="(totalPureWeight * (goldPrice || 0)).toLocaleString() + ' د.ل'"></span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-400">المبلغ النقدي:</span>
+                                <span class="dark:text-white font-medium" x-text="(moneyAmount || 0).toLocaleString() + ' د.ل'"></span>
+                            </div>
+                        </div>
+
+                        <div :class="reachesNisab ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'" class="p-4 rounded-2xl transition-all duration-500">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded-full" :class="reachesNisab ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"></div>
+                                <span class="font-bold text-sm" x-text="reachesNisab ? 'بلغ المجموع النصاب' : 'لم يبلغ النصاب'"></span>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <span class="text-xs font-bold text-amber-600 uppercase mb-2 block">الزكاة الواجبة (2.5%)</span>
+                            <div class="flex items-baseline gap-2 mb-4">
+                                <span class="text-5xl font-black gold-accent number-transition" x-text="animatedZakat.toLocaleString()"></span>
+                                <span class="text-slate-400 font-bold">دينار</span>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border-r-4 border-amber-500">
+                                <h4 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">ملاحظات شرعية:</h4>
+                                <ul class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <li class="flex items-start gap-1">
+                                        <span class="text-amber-500">•</span>
+                                        <span>يشترط مرور الحول (سنة هجرية) على امتلاك النصاب.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function zakatApp() {
+            return {
+                darkMode: false,
+                inputMode: 'price',
+                items: [{ weight: null, karat: 24 }],
+                moneyAmount: null,
+                goldPrice: null,
+                manualNisab: null,
+                totalPureWeight: 0,
+                grandTotal: 0,
+                zakatAmount: 0,
+                animatedZakat: 0,
+                reachesNisab: false,
+                nisabGrams: 85,
+
+                addItem() { this.items.push({ weight: null, karat: 21 }); },
+                removeItem(index) { if(this.items.length > 1) { this.items.splice(index, 1); this.calculate(); } },
+
+                getPureWeight(item) {
+                    const ratios = { 24: 1, 22: 22/24, 21: 21/24, 18: 18/24 };
+                    return (item.weight || 0) * (ratios[item.karat] || 1);
+                },
+
+                updateFromPrice() {
+                    this.manualNisab = this.goldPrice ? Math.round(this.goldPrice * this.nisabGrams) : null;
+                    this.calculate();
+                },
+
+                updateFromNisab() {
+                    this.goldPrice = this.manualNisab ? Math.round(this.manualNisab / this.nisabGrams) : null;
+                    this.calculate();
+                },
+
+                animateNumber(target) {
+                    const start = this.animatedZakat;
+                    const duration = 600;
+                    const startTime = performance.now();
+                    const step = (currentTime) => {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 4);
+                        this.animatedZakat = Math.floor(start + (target - start) * easeOut);
+                        if (progress < 1) requestAnimationFrame(step);
+                        else this.animatedZakat = target;
+                    };
+                    requestAnimationFrame(step);
+                },
+
+                calculate() {
+                    this.totalPureWeight = this.items.reduce((sum, item) => sum + this.getPureWeight(item), 0);
+                    const currentGoldPrice = this.goldPrice || 0;
+                    this.grandTotal = (this.totalPureWeight * currentGoldPrice) + (this.moneyAmount || 0);
+                    const currentNisabLimit = currentGoldPrice * this.nisabGrams;
+                    
+                    this.reachesNisab = currentNisabLimit > 0 && this.grandTotal >= currentNisabLimit;
+                    const newZakat = this.reachesNisab ? Math.floor(this.grandTotal * 0.025) : 0;
+                    
+                    if (newZakat !== this.zakatAmount) {
+                        this.zakatAmount = newZakat;
+                        this.animateNumber(newZakat);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
